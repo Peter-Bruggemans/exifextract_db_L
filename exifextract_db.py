@@ -6,11 +6,11 @@ import psycopg2
 import sqlite3
 
 # variabelen voor de broninstructieregel
-broninstructie = "dir"
-brondrive = "e:/"
-bronpad = "Peter Afbeeldingen/Archief/Scan0116/2016_04_15/"
+broninstructie = "ls"
+brondrive = "/"
+bronpad = "/home/peter/Afbeeldingen/darktable/20160527_noname"
 bronbestand = "*.CR2"
-bronoptie = "/b/s"
+bronoptie = ""
 
 # variabelen voor de doelinstructieregel
 doelinstructie = "exiftool -T -canon"
@@ -22,8 +22,8 @@ v_host='raspberrypi.lan'
 v_password='exif_wr'
 
 # variabelen voor de sqlite database
-v_dbdrive = 'e:/'
-v_dbpad = 'exiftool/'
+v_dbdrive = '/'
+v_dbpad = 'home/peter/Documenten/exiftool/'
 v_dbfile = 'exif.sqlite'
 
 # variabelen voor de sql instructie
@@ -68,7 +68,7 @@ values
 actie3 = '''\n);'''
 
 # bouw de broninstructieregel
-bronregel = broninstructie + ' "' + brondrive + bronpad + '/' + bronbestand + '"'
+bronregel = broninstructie + ' ' + brondrive + bronpad + '/' + bronbestand
 # pas de broninstructieregel aan aan het os(/ wordt \) en voeg de opties toe(/ moet blijven)
 osbronregel = (os.path.normpath(bronregel)) + " " + bronoptie
 
@@ -94,7 +94,7 @@ try:
     for line in lines:
         if len(line) > 0:
             # bouw de doelinstructieregel
-            doelregel = doelinstructie + ' "' + line + '"'
+            doelregel = doelinstructie + ' ' + line
             # pas de broninstructieregel aan aan het os(/ wordt \)
             osdoelregel = (os.path.normpath(doelregel))
 
