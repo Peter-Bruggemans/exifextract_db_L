@@ -6,20 +6,25 @@ import psycopg2
 import sqlite3
 
 # variabelen voor de broninstructieregel
-broninstructie = "ls"
-brondrive = "/"
-bronpad = "/home/peter/Afbeeldingen/darktable/20160527_noname"
-bronbestand = "*.CR2"
-bronoptie = ""
+bronregel = """ls -R /home/peter/Fotos | awk '/:$/&&f{s=$0;f=0}/:$/&&!f{sub(/:$/,"");s=$0;f=1;next}NF&&f{ print s"/"$0 }'"""
+bronpad = '/home/peter/Fotos/'
+bronbestand = 'CR2'
 
 # variabelen voor de doelinstructieregel
 doelinstructie = "exiftool -T -canon"
 
 # variabelen voor de postgreql database
-v_dbname='exif' 
-v_user='exif_wr' 
-v_host='raspberrypi.lan' 
-v_password='exif_wr'
+#v_dbname='exif' 
+#v_user='exif_wr' 
+#v_host='raspberrypi.lan' 
+#v_password='exif_wr'
+
+# variabelen voor de postgreql database
+v_dbname='python' 
+v_user='adminj3ikigb'
+v_host='localhost'
+v_password='4yWHbxthcIEL'
+
 
 # variabelen voor de sqlite database
 v_dbdrive = '/'
@@ -67,11 +72,6 @@ values
 
 actie3 = '''\n);'''
 
-# bouw de broninstructieregel
-bronregel = broninstructie + ' ' + brondrive + bronpad + '/' + bronbestand
-# pas de broninstructieregel aan aan het os(/ wordt \) en voeg de opties toe(/ moet blijven)
-osbronregel = (os.path.normpath(bronregel)) + " " + bronoptie
-
 # maak verbinding met de database
 try:
     print "connecting database"
@@ -87,37 +87,39 @@ try:
     cur = conn.cursor()
 
     # voer de broninstructie uit
-    result=check_output(osbronregel, shell=True)
+    result=check_output(bronregel, shell=True)
     # verdeel het resultaat in regels
     lines = result.split('\n')
-    # maak de doelinstructieregel aan per broninstructieregel
+    # filter op bronpad en bronbestand en maak de doelinstructieregel aan per broninstructieregel
+    teller = 0
     for line in lines:
         if len(line) > 0:
-            # bouw de doelinstructieregel
-            doelregel = doelinstructie + ' ' + line
-            # pas de broninstructieregel aan aan het os(/ wordt \)
-            osdoelregel = (os.path.normpath(doelregel))
+            if line[-3:] == bronbestand:
+                if line[0:len(bronpad)] == bronpad:
+                    # bouw de doelinstructieregel
+                    doelregel = doelinstructie + ' ' + line
+                    # pas de broninstructieregel aan aan het os(/ wordt \)
+                    osdoelregel = (os.path.normpath(doelregel))
 
-            # controle
-            #print (doelregel)
-            #print (osdoelregel)
+                    # controle
+                    #print (doelregel)
+                    #print (osdoelregel)
 
-            # voer de doelinstructieregel uit
-            result2 = check_output(osdoelregel, shell=True)
-            # zet het resultaat van de doelinstructie om in een sql-instructie
-            fields = result2.split("\t")
-            #print lines.index(line)
-            sql = actie1 + ',\n'.join(map("'{0}'".format, fields)) + actie3
-            teller = lines.index(line) + 1
-            print str(teller) + " row(s) inserted"
-            cur.execute(sql)
-            # voor postgresql
-            cur.execute('commit;')
-            # voor sqlite
-            #cur.execute(';')
+                    # voer de doelinstructieregel uit
+                    result2 = check_output(osdoelregel, shell=True)
+                    # zet het resultaat van de doelinstructie om in een sql-instructie
+                    fields = result2.split("\t")
+                    sql = actie1 + ',\n'.join(map("'{0}'".format, fields)) + actie3
+                    teller = teller + 1
+                    print str(teller) + " row(s) inserted"
+                    cur.execute(sql)
+                    # voor postgresql
+                    cur.execute('commit;')
+                    # voor sqlite
+                    #cur.execute(';')
 
 
-# verbreek verbinding met de database
+    # verbreek verbinding met de database
     cur.close()
     print "database connection closed"
 
