@@ -109,7 +109,8 @@ try:
                     result2 = check_output(osdoelregel, shell=True)
                     # zet het resultaat van de doelinstructie om in een sql-instructie
                     fields = result2.split("\t")
-                    sql = actie1 + ',\n'.join(map("'{0}'".format, fields)) + actie3
+                    fields2 = [word.replace('\r\n','') for word in fields]
+                    sql = actie1 + ',\n'.join(map("'{0}'".format, fields2)) + actie3
                     teller = teller + 1
                     print str(teller) + " row(s) inserted"
                     cur.execute(sql)
